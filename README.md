@@ -1,21 +1,26 @@
-# 🧰 AI Agent Service Toolkit
+# Agent Toolkit
 
-[![build status](https://github.com/JoshuaC215/agent-service-toolkit/actions/workflows/test.yml/badge.svg)](https://github.com/JoshuaC215/agent-service-toolkit/actions/workflows/test.yml) [![codecov](https://codecov.io/github/JoshuaC215/agent-service-toolkit/graph/badge.svg?token=5MTJSYWD05)](https://codecov.io/github/JoshuaC215/agent-service-toolkit) [![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FJoshuaC215%2Fagent-service-toolkit%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)](https://github.com/JoshuaC215/agent-service-toolkit/blob/main/pyproject.toml)
-[![GitHub License](https://img.shields.io/github/license/JoshuaC215/agent-service-toolkit)](https://github.com/JoshuaC215/agent-service-toolkit/blob/main/LICENSE) [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_red.svg)](https://agent-service-toolkit.streamlit.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) [![API on Vercel](https://img.shields.io/badge/API-Vercel-000000?style=flat&logo=vercel&logoColor=white)](https://agent-toolkit.vercel.app/docs)
 
 A full toolkit for running an AI agent service built with LangGraph, FastAPI and Streamlit.
 
 It includes a [LangGraph](https://langchain-ai.github.io/langgraph/) agent, a [FastAPI](https://fastapi.tiangolo.com/) service to serve it, a client to interact with the service, and a [Streamlit](https://streamlit.io/) app that uses the client to provide a chat interface. Data structures and settings are built with [Pydantic](https://github.com/pydantic/pydantic).
 
-This project offers a template for you to easily build and run your own agents using the LangGraph framework. It demonstrates a complete setup from agent definition to user interface, making it easier to get started with LangGraph-based projects by providing a full, robust toolkit.
+This repository extends the [agent-service-toolkit](https://github.com/JoshuaC215/agent-service-toolkit) template with a **Vercel-compatible** FastAPI entrypoint (`server.py` at the repo root) and README links pointed at **this** deployment and GitHub repo.
 
-**[🎥 Watch a video walkthrough of the repo and app](https://www.youtube.com/watch?v=pdYVHw_YCNY)**
+**[Video walkthrough of the upstream template](https://www.youtube.com/watch?v=pdYVHw_YCNY)**
 
 ## Overview
 
-### [Try the app!](https://agent-service-toolkit.streamlit.app/)
+### [Live API on Vercel](https://agent-toolkit.vercel.app/docs)
 
-<a href="https://agent-service-toolkit.streamlit.app/"><img src="media/app_screenshot.png" width="600"></a>
+Open **`/docs`** or **`/redoc`** on that host for interactive OpenAPI. If Vercel assigned a different domain (for example under a team), use **Project → Domains** in the dashboard and update the links at the top of this README to match.
+
+### Streamlit chat UI
+
+The chat UI is normally run **locally** (`streamlit run src/streamlit_app.py`) or on [Streamlit Community Cloud](https://streamlit.io/cloud) with `AGENT_URL` pointing at your API.
+
+<img src="media/app_screenshot.png" width="600" alt="Streamlit chat UI (run locally)">
 
 ### Quickstart
 
@@ -83,14 +88,25 @@ Updates in this workspace compared to the baseline [agent-service-toolkit](https
 | Area | Change |
 |------|--------|
 | `src/service/service.py` | The FastAPI app now sets **OpenAPI metadata**: `title` (“Agent service”), `description` (short summary of the HTTP API), and `version` (`0.1.0`). This appears in Swagger UI (`/docs`), ReDoc (`/redoc`), and any OpenAPI clients. **No change** to routes, handlers, status codes, or JSON response shapes. |
+| `server.py` (repo root) | **Vercel entrypoint**: exposes the same `app` as `run_service.py`, after adding `src/` to `sys.path` so imports match local development. Required for Vercel’s FastAPI detection ([docs](https://vercel.com/docs/frameworks/backend/fastapi)). |
+| `README.md` | Badges and “live” links target **this** repo and Vercel deployment instead of the upstream template URLs. |
+
+### Deploying the FastAPI service on Vercel
+
+1. Connect this GitHub repository in Vercel and deploy (framework preset **FastAPI** / Python is auto-detected).
+2. In **Project → Settings → Environment Variables**, add at least **`OPENAI_API_KEY`** (or whichever provider you use). Add any other vars from [`.env.example`](./.env.example) you rely on.
+3. For SQLite checkpoints on serverless, set a writable path, for example **`SQLITE_DB_PATH=/tmp/checkpoints.db`**, unless you use Postgres (`DATABASE_TYPE=postgres` and a valid `POSTGRES_URL`).
+4. Redeploy after changing variables.
+
+Vercel runs your API as a **single serverless function**; cold starts, execution time limits, and the [250 MB / 500 MB bundle limits](https://vercel.com/docs/functions/limitations) apply. If the bundle is too large or agents time out, run the API on a VM, Fly.io, Railway, or Docker instead.
 
 ## Setup and Usage
 
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/JoshuaC215/agent-service-toolkit.git
-   cd agent-service-toolkit
+   git clone https://github.com/Jaymin20-cloud/agent-toolkit.git
+   cd agent-toolkit
    ```
 
 2. Set up environment variables:

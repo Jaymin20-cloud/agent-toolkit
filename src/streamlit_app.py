@@ -162,9 +162,9 @@ async def main() -> None:
         @st.dialog("Architecture")
         def architecture_dialog() -> None:
             st.image(
-                "https://github.com/JoshuaC215/agent-service-toolkit/blob/main/media/agent_architecture.png?raw=true"
+                "https://raw.githubusercontent.com/Jaymin20-cloud/agent-toolkit/main/media/agent_architecture.png"
             )
-            "[View full size on Github](https://github.com/JoshuaC215/agent-service-toolkit/blob/main/media/agent_architecture.png)"
+            "[View full size on GitHub](https://github.com/Jaymin20-cloud/agent-toolkit/blob/main/media/agent_architecture.png)"
             st.caption(
                 "App hosted on [Streamlit Cloud](https://share.streamlit.io/) with FastAPI service running in [Azure](https://learn.microsoft.com/en-us/azure/app-service/)"
             )
@@ -196,10 +196,8 @@ async def main() -> None:
         if st.button(":material/upload: Share/resume chat", use_container_width=True):
             share_chat_dialog()
 
-        "[View the source code](https://github.com/JoshuaC215/agent-service-toolkit)"
-        st.caption(
-            "Made with :material/favorite: by [Joshua](https://www.linkedin.com/in/joshua-k-carroll/) in Oakland"
-        )
+        "[View the source code](https://github.com/Jaymin20-cloud/agent-toolkit)"
+        st.caption("Agent Toolkit · FastAPI + LangGraph + Streamlit")
 
     # Draw existing messages
     messages: list[ChatMessage] = st.session_state.messages
