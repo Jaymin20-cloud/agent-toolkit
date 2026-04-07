@@ -14,10 +14,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from langchain_core._api import LangChainBetaWarning
 from langchain_core.messages import AIMessage, AIMessageChunk, AnyMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
-from langfuse import Langfuse  # type: ignore[import-untyped]
-from langfuse.langchain import (
-    CallbackHandler,  # type: ignore[import-untyped]
-)
 from langgraph.types import Command, Interrupt
 from langsmith import Client as LangsmithClient
 from langsmith import uuid7
@@ -43,6 +39,18 @@ from service.utils import (
 
 warnings.filterwarnings("ignore", category=LangChainBetaWarning)
 logger = logging.getLogger(__name__)
+
+
+def _langfuse_callback_handler() -> Any | None:
+    if not settings.LANGFUSE_TRACING:
+        return None
+    try:
+        from langfuse.langchain import CallbackHandler  # type: ignore[import-untyped]
+
+        return CallbackHandler()
+    except ImportError:
+        logger.warning("LANGFUSE_TRACING is on but langfuse is not installed; skipping callbacks")
+        return None
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -136,10 +144,7 @@ async def _handle_input(user_input: UserInput, agent: AgentGraph) -> tuple[dict[
         configurable["model"] = user_input.model
 
     callbacks: list[Any] = []
-    if settings.LANGFUSE_TRACING:
-        # Initialize Langfuse CallbackHandler for Langchain (tracing)
-        langfuse_handler = CallbackHandler()
-
+    if langfuse_handler := _langfuse_callback_handler():
         callbacks.append(langfuse_handler)
 
     if user_input.agent_config:
@@ -425,8 +430,12 @@ async def health_check():
 
     if settings.LANGFUSE_TRACING:
         try:
+            from langfuse import Langfuse  # type: ignore[import-untyped]
+
             langfuse = Langfuse()
             health_status["langfuse"] = "connected" if langfuse.auth_check() else "disconnected"
+        except ImportError:
+            health_status["langfuse"] = "unavailable"
         except Exception as e:
             logger.error(f"Langfuse connection error: {e}")
             health_status["langfuse"] = "disconnected"

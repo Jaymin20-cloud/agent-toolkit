@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pip install --no-cache-dir -r requirements-vercel.txt",
+  "env": {
+    "AGENT_TOOLKIT_SLIM": "1"
+  }
+}

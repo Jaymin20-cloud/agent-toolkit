@@ -1,14 +1,7 @@
 from functools import cache
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
-from langchain_anthropic import ChatAnthropic
-from langchain_aws import ChatBedrock
 from langchain_community.chat_models import FakeListChatModel
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_google_vertexai import ChatVertexAI
-from langchain_groq import ChatGroq
-from langchain_ollama import ChatOllama
-from langchain_openai import AzureChatOpenAI, ChatOpenAI
 
 from core.settings import settings
 from schema.models import (
@@ -51,17 +44,8 @@ class FakeToolModel(FakeListChatModel):
         return self
 
 
-ModelT: TypeAlias = (
-    AzureChatOpenAI
-    | ChatOpenAI
-    | ChatAnthropic
-    | ChatGoogleGenerativeAI
-    | ChatVertexAI
-    | ChatGroq
-    | ChatBedrock
-    | ChatOllama
-    | FakeToolModel
-)
+# Return type is lazy-loaded provider classes; keep loose for smaller optional installs.
+ModelT: TypeAlias = Any
 
 
 @cache
@@ -73,10 +57,14 @@ def get_model(model_name: AllModelEnum, /) -> ModelT:
         raise ValueError(f"Unsupported model: {model_name}")
 
     if model_name in OpenAIModelName:
+        from langchain_openai import ChatOpenAI
+
         return ChatOpenAI(model=api_model_name, streaming=True)
     if model_name in OpenAICompatibleName:
         if not settings.COMPATIBLE_BASE_URL or not settings.COMPATIBLE_MODEL:
             raise ValueError("OpenAICompatible base url and endpoint must be configured")
+
+        from langchain_openai import ChatOpenAI
 
         return ChatOpenAI(
             model=settings.COMPATIBLE_MODEL,
@@ -89,6 +77,8 @@ def get_model(model_name: AllModelEnum, /) -> ModelT:
         if not settings.AZURE_OPENAI_API_KEY or not settings.AZURE_OPENAI_ENDPOINT:
             raise ValueError("Azure OpenAI API key and endpoint must be configured")
 
+        from langchain_openai import AzureChatOpenAI
+
         return AzureChatOpenAI(
             azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
             deployment_name=api_model_name,
@@ -99,6 +89,8 @@ def get_model(model_name: AllModelEnum, /) -> ModelT:
             max_retries=3,
         )
     if model_name in DeepseekModelName:
+        from langchain_openai import ChatOpenAI
+
         return ChatOpenAI(
             model=api_model_name,
             temperature=0.5,
@@ -107,18 +99,30 @@ def get_model(model_name: AllModelEnum, /) -> ModelT:
             openai_api_key=settings.DEEPSEEK_API_KEY,
         )
     if model_name in AnthropicModelName:
+        from langchain_anthropic import ChatAnthropic
+
         return ChatAnthropic(model=api_model_name, temperature=0.5, streaming=True)
     if model_name in GoogleModelName:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
         return ChatGoogleGenerativeAI(model=api_model_name, temperature=0.5, streaming=True)
     if model_name in VertexAIModelName:
+        from langchain_google_vertexai import ChatVertexAI
+
         return ChatVertexAI(model=api_model_name, temperature=0.5, streaming=True)
     if model_name in GroqModelName:
+        from langchain_groq import ChatGroq
+
         if model_name == GroqModelName.GPT_OSS_SAFEGUARD_20B:
             return ChatGroq(model=api_model_name, temperature=0.0)  # type: ignore[call-arg]
         return ChatGroq(model=api_model_name, temperature=0.5)  # type: ignore[call-arg]
     if model_name in AWSModelName:
+        from langchain_aws import ChatBedrock
+
         return ChatBedrock(model_id=api_model_name, temperature=0.5)
     if model_name in OllamaModelName:
+        from langchain_ollama import ChatOllama
+
         if settings.OLLAMA_BASE_URL:
             chat_ollama = ChatOllama(
                 model=settings.OLLAMA_MODEL, temperature=0.5, base_url=settings.OLLAMA_BASE_URL
@@ -127,6 +131,8 @@ def get_model(model_name: AllModelEnum, /) -> ModelT:
             chat_ollama = ChatOllama(model=settings.OLLAMA_MODEL, temperature=0.5)
         return chat_ollama
     if model_name in OpenRouterModelName:
+        from langchain_openai import ChatOpenAI
+
         return ChatOpenAI(
             model=api_model_name,
             temperature=0.5,

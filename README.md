@@ -91,17 +91,18 @@ Updates in this workspace compared to the baseline [agent-service-toolkit](https
 | `server.py` (repo root) | **Vercel entrypoint**: exposes the same `app` as `run_service.py`, after adding `src/` to `sys.path` so imports match local development. Required for Vercel’s FastAPI detection ([docs](https://vercel.com/docs/frameworks/backend/fastapi)). |
 | `src/server.py`, `api/index.py` | Extra entrypoints for the same `app` if Vercel’s **Root Directory** is `src` or if the builder prefers the `api/` layout. |
 | `README.md` | Badges and “live” links target **this** repo and Vercel deployment instead of the upstream template URLs. |
+| `requirements-vercel.txt` + `vercel.json` | **Slim pip install** for Vercel: skips Streamlit, ONNX, Pandas/PyArrow, Chroma, Postgres/Mongo drivers, and extra LangChain vendor packages so the deployment is far smaller (targeting the [function bundle limit](https://vercel.com/docs/functions/limitations)). |
+| `AGENT_TOOLKIT_SLIM=1` | When set (included in `vercel.json` for Vercel), only the **`chatbot`** agent is registered so imports match the slim dependency set. Full Docker/local installs omit this variable to load every agent. |
+| `src/memory/__init__.py`, `src/core/llm.py`, `src/service/service.py` | **Lazy imports** for DB backends (Postgres/Mongo/SQLite), LLM providers, and Langfuse so unused options are not loaded at import time—smaller memory and fewer optional wheels on minimal installs. |
 
 ### Deploying the FastAPI service on Vercel
 
-1. Connect this GitHub repository in Vercel and deploy (framework preset **FastAPI** / Python is auto-detected).
-   - **Root Directory** must be the repository root (leave **empty** / `.`). If it is set to `src`, Vercel never sees `server.py` at the repo root; this repo also includes **`src/server.py`** and **`api/index.py`** so an entrypoint still exists under those layouts ([FastAPI on Vercel](https://vercel.com/docs/frameworks/backend/fastapi)).
-   - If the build still says **“No fastapi entrypoint found”**, confirm the deployment commit includes **`server.py`** at the root on GitHub, then **Redeploy** without build cache.
-2. In **Project → Settings → Environment Variables**, add at least **`OPENAI_API_KEY`** (or whichever provider you use). Add any other vars from [`.env.example`](./.env.example) you rely on.
-3. For SQLite checkpoints on serverless, set a writable path, for example **`SQLITE_DB_PATH=/tmp/checkpoints.db`**, unless you use Postgres (`DATABASE_TYPE=postgres` and a valid `POSTGRES_URL`).
-4. Redeploy after changing variables.
+1. This repo ships **`vercel.json`** with `installCommand: pip install -r requirements-vercel.txt` so Vercel does **not** install the full `pyproject.toml` dependency set (which is far above typical serverless limits). [FastAPI on Vercel](https://vercel.com/docs/frameworks/backend/fastapi).
+2. **`AGENT_TOOLKIT_SLIM=1`** is set in `vercel.json` for production/preview runtimes. That exposes only the **`chatbot`** agent and matches the slim requirements. Use **`OPENAI_API_KEY`** and keep the default OpenAI model (or set **`DEFAULT_MODEL`** to an OpenAI enum your app supports). To use Anthropic, Google, etc. on Vercel you must add the matching packages to `requirements-vercel.txt` and turn off slim mode (or extend the slim list carefully).
+3. **Root Directory** should be the repository root (empty). If it is set to `src`, use the included **`src/server.py`** entrypoint. If the build says **“No fastapi entrypoint found”**, redeploy without cache and confirm `server.py` exists on `main`.
+4. In **Project → Settings → Environment Variables**, set **`OPENAI_API_KEY`**, **`SQLITE_DB_PATH=/tmp/checkpoints.db`**, and any other vars from [`.env.example`](./.env.example) you need. Redeploy after changes.
 
-Vercel runs your API as a **single serverless function**; cold starts, execution time limits, and the [250 MB / 500 MB bundle limits](https://vercel.com/docs/functions/limitations) apply. If the bundle is too large or agents time out, run the API on a VM, Fly.io, Railway, or Docker instead.
+Vercel runs your API as a **single serverless function**; cold starts, execution time limits, and bundle size still apply. If the slim build is **still** over the limit, use Docker, Fly.io, Railway, or a VM for the full dependency graph.
 
 ## Setup and Usage
 
