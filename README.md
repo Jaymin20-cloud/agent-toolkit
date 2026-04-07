@@ -89,11 +89,14 @@ Updates in this workspace compared to the baseline [agent-service-toolkit](https
 |------|--------|
 | `src/service/service.py` | The FastAPI app now sets **OpenAPI metadata**: `title` (“Agent service”), `description` (short summary of the HTTP API), and `version` (`0.1.0`). This appears in Swagger UI (`/docs`), ReDoc (`/redoc`), and any OpenAPI clients. **No change** to routes, handlers, status codes, or JSON response shapes. |
 | `server.py` (repo root) | **Vercel entrypoint**: exposes the same `app` as `run_service.py`, after adding `src/` to `sys.path` so imports match local development. Required for Vercel’s FastAPI detection ([docs](https://vercel.com/docs/frameworks/backend/fastapi)). |
+| `src/server.py`, `api/index.py` | Extra entrypoints for the same `app` if Vercel’s **Root Directory** is `src` or if the builder prefers the `api/` layout. |
 | `README.md` | Badges and “live” links target **this** repo and Vercel deployment instead of the upstream template URLs. |
 
 ### Deploying the FastAPI service on Vercel
 
 1. Connect this GitHub repository in Vercel and deploy (framework preset **FastAPI** / Python is auto-detected).
+   - **Root Directory** must be the repository root (leave **empty** / `.`). If it is set to `src`, Vercel never sees `server.py` at the repo root; this repo also includes **`src/server.py`** and **`api/index.py`** so an entrypoint still exists under those layouts ([FastAPI on Vercel](https://vercel.com/docs/frameworks/backend/fastapi)).
+   - If the build still says **“No fastapi entrypoint found”**, confirm the deployment commit includes **`server.py`** at the root on GitHub, then **Redeploy** without build cache.
 2. In **Project → Settings → Environment Variables**, add at least **`OPENAI_API_KEY`** (or whichever provider you use). Add any other vars from [`.env.example`](./.env.example) you rely on.
 3. For SQLite checkpoints on serverless, set a writable path, for example **`SQLITE_DB_PATH=/tmp/checkpoints.db`**, unless you use Postgres (`DATABASE_TYPE=postgres` and a valid `POSTGRES_URL`).
 4. Redeploy after changing variables.
