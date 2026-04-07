@@ -1,20 +1,20 @@
 # Agent Toolkit
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) [![API on Vercel](https://img.shields.io/badge/API-Vercel-000000?style=flat&logo=vercel&logoColor=white)](https://agent-toolkit.vercel.app/docs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 A full toolkit for running an AI agent service built with LangGraph, FastAPI and Streamlit.
 
 It includes a [LangGraph](https://langchain-ai.github.io/langgraph/) agent, a [FastAPI](https://fastapi.tiangolo.com/) service to serve it, a client to interact with the service, and a [Streamlit](https://streamlit.io/) app that uses the client to provide a chat interface. Data structures and settings are built with [Pydantic](https://github.com/pydantic/pydantic).
 
-This repository extends the [agent-service-toolkit](https://github.com/JoshuaC215/agent-service-toolkit) template with a **Vercel-compatible** FastAPI entrypoint (`server.py` at the repo root) and README links pointed at **this** deployment and GitHub repo.
+This repository extends the [agent-service-toolkit](https://github.com/JoshuaC215/agent-service-toolkit) template with a **Vercel-compatible** FastAPI entrypoint (`server.py` at the repo root) and optional slim deploy files (`requirements-vercel.txt`, `vercel.json`).
 
 **[Video walkthrough of the upstream template](https://www.youtube.com/watch?v=pdYVHw_YCNY)**
 
 ## Overview
 
-### [Live API on Vercel](https://agent-toolkit.vercel.app/docs)
+### API docs (local)
 
-Open **`/docs`** or **`/redoc`** on that host for interactive OpenAPI. If Vercel assigned a different domain (for example under a team), use **Project → Domains** in the dashboard and update the links at the top of this README to match.
+With the service running (`python src/run_service.py` or Docker), open **`http://localhost:8080/docs`** or **`/redoc`** for interactive OpenAPI. A public “try it” deployment link will be added back to this README once hosting is stable.
 
 ### Streamlit chat UI
 
@@ -90,7 +90,7 @@ Updates in this workspace compared to the baseline [agent-service-toolkit](https
 | `src/service/service.py` | The FastAPI app now sets **OpenAPI metadata**: `title` (“Agent service”), `description` (short summary of the HTTP API), and `version` (`0.1.0`). This appears in Swagger UI (`/docs`), ReDoc (`/redoc`), and any OpenAPI clients. **No change** to routes, handlers, status codes, or JSON response shapes. |
 | `server.py` (repo root) | **Vercel entrypoint**: exposes the same `app` as `run_service.py`, after adding `src/` to `sys.path` so imports match local development. Required for Vercel’s FastAPI detection ([docs](https://vercel.com/docs/frameworks/backend/fastapi)). |
 | `src/server.py`, `api/index.py` | Extra entrypoints for the same `app` if Vercel’s **Root Directory** is `src` or if the builder prefers the `api/` layout. |
-| `README.md` | Badges and “live” links target **this** repo and Vercel deployment instead of the upstream template URLs. |
+| `README.md` | Project-specific notes and changelog; public demo link removed until hosting is stable. |
 | `requirements-vercel.txt` + `vercel.json` | **Slim pip install** for Vercel: skips Streamlit, ONNX, Pandas/PyArrow, Chroma, Postgres/Mongo drivers, and extra LangChain vendor packages so the deployment is far smaller (targeting the [function bundle limit](https://vercel.com/docs/functions/limitations)). |
 | `AGENT_TOOLKIT_SLIM=1` | When set (included in `vercel.json` for Vercel), only the **`chatbot`** agent is registered so imports match the slim dependency set. Full Docker/local installs omit this variable to load every agent. |
 | `src/memory/__init__.py`, `src/core/llm.py`, `src/service/service.py` | **Lazy imports** for DB backends (Postgres/Mongo/SQLite), LLM providers, and Langfuse so unused options are not loaded at import time—smaller memory and fewer optional wheels on minimal installs. |
